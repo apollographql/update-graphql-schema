@@ -1,18 +1,23 @@
-name: 'Apollo update schema'
+name: 'Update GraphQL schema'
 description: 'Downloads a new version of your GraphQL schema and opens a pull request if it changed'
 inputs:
-  schema: 
+  schema:
     description: 'The path to the schema file to be updated'
     required: true
+  token:
+    description: 'The github token to use to create the pull request'
+    required: true
+    default: ${{ github.token }}
   graph:
     description: '[Apollo Studio users only] The identifier of the Apollo graph used to download the schema.'
     required: false
   key:
     description: '[Apollo Studio users only] The Apollo API key. See https://www.apollographql.com/docs/studio/api-keys/ for more information on how to get your API key.'
     required: false
-  graphVariant:
+  graph_variant:
     description: '[Apollo Studio users only] The variant of the Apollo graph used to download the schema.'
     required: false
+    default: 'current'
   registryUrl:
     description: '[Apollo Studio users only] The registry url of the registry instance used to download the schema.'
     required: false
@@ -21,20 +26,36 @@ inputs:
     description: 'The url of the GraphQL endpoint for introspection'
     required: false
   headers: 
-    description: 'A comma sepratated list of HTTP headers to use while introspecting `endpoint`'
+    description: 'A comma separated list of HTTP headers to use while introspecting `endpoint`'
     required: false
-  insecure: 
-    description: 'Do not verify certificates during introspection'
+  insecure:
+    description: 'Do not verify certificates during download'
     required: false
     default: 'false'
-  branch_name: 
-    description: 'The name of the branch to use to create the pull request'
+  branch:
+    description: 'The name of the branch to use to create the pull request. If not set, will use update-schema-MM-dd-HH:mm'
     required: false
-    default: 'update-schema'
-  remote: 
+  remote:
     description: 'The remote to push the branch used to create the pull request'
     required: false
     default: 'origin'
+  commit_user_name:
+    description: Name used for the commit user
+    required: false
+    default: github-actions[bot]
+  commit_user_email:
+    description: Email address used for the commit user
+    required: false
+    default: github-actions[bot]@users.noreply.github.com
+  commit_author:
+    description: Value used for the commit author. Defaults to the username of whoever triggered this workflow run.
+    required: false
+    default: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+  commit_message:
+    description: Value used for the commit message.
+    required: false
+    default: "Update GraphQL Schema"
+
 runs:
   using: 'node12'
   main: 'index.js'
