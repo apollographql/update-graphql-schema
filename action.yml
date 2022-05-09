@@ -1,0 +1,41 @@
+name: 'Apollo update schema'
+description: 'Downloads a new version of your GraphQL schema and opens a pull request if it changed'
+inputs:
+  schema: 
+    description: 'The path to the schema file to be updated'
+    required: true
+  graph:
+    description: '[Apollo Studio users only] The identifier of the Apollo graph used to download the schema.'
+    required: false
+  key:
+    description: '[Apollo Studio users only] The Apollo API key. See https://www.apollographql.com/docs/studio/api-keys/ for more information on how to get your API key.'
+    required: false
+  graphVariant:
+    description: '[Apollo Studio users only] The variant of the Apollo graph used to download the schema.'
+    required: false
+  registryUrl:
+    description: '[Apollo Studio users only] The registry url of the registry instance used to download the schema.'
+    required: false
+    default: 'https://graphql.api.apollographql.com/api/graphql'
+  endpoint: 
+    description: 'The url of the GraphQL endpoint for introspection'
+    required: false
+  headers: 
+    description: 'A comma sepratated list of HTTP headers to use while introspecting `endpoint`'
+    required: false
+  insecure: 
+    description: 'Do not verify certificates during introspection'
+    required: false
+    default: 'false'
+  branch_name: 
+    description: 'The name of the branch to use to create the pull request'
+    required: false
+    default: 'update-schema'
+  remote: 
+    description: 'The remote to push the branch used to create the pull request'
+    required: false
+    default: 'origin'
+runs:
+  using: 'node12'
+  main: 'index.js'
+
