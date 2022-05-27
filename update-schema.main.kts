@@ -4,6 +4,7 @@
 @file:Repository("https://repo.maven.apache.org/maven2")
 @file:DependsOn("com.apollographql.apollo3:apollo-gradle-plugin-external:3.3.1-SNAPSHOT")
 @file:DependsOn("com.squareup.okio:okio-jvm:3.1.0")
+@file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
 import com.apollographql.apollo3.gradle.internal.SchemaDownloader
 import okio.buffer
@@ -12,6 +13,8 @@ import okio.source
 import java.io.File
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Executes the given command and returns stdout as a String
@@ -81,6 +84,14 @@ fun run() {
             now.minute
         )
     }
+    val headers: Map<String, String> = getOptionalInput("headers")?.let { headerJsonStr ->
+        try {
+            (Json.parseToJsonElement(headerJsonStr) as JsonObject).mapValues { it.value.toString() }
+        } catch (e: Exception) {
+            error("'headers' must be a JSON object of the form {\"header1\": \"value1\", \"header2\": \"value2\"}")
+        }
+    } ?: emptyMap()
+
     SchemaDownloader.download(
         endpoint = getOptionalInput("endpoint"),
         graph = getOptionalInput("graph"),
@@ -88,13 +99,7 @@ fun run() {
         graphVariant = getInput("graph_variant"),
         registryUrl = getInput("registryUrl"),
         schema = File(getInput("schema")),
-        headers = getOptionalInput("headers")?.split(",")?.filter { it.isNotBlank() }?.associate {
-            val c = it.split(":")
-            check(c.size == 2) {
-                "Bad header: $it"
-            }
-            c[0].trim() to c[1].trim()
-        } ?: emptyMap(),
+        headers = headers,
         insecure = getInput("insecure").toBoolean(),
     )
 

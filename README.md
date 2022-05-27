@@ -29,7 +29,7 @@ jobs:
           schema: "src/main/graphql/schema.graphqls"
           
           #  Optional HTTP settings for the download
-          headers: "Authorization: Bearer $token, User-Agent: MyAction" # default: ""
+          headers: '{"Authorization": "Bearer $token", "User-Agent": "MyAction"}' # default: ""
           insecure: "false" # default: "false"
 
           # Optional pull request settings        

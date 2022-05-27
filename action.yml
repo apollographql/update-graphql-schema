@@ -26,7 +26,7 @@ inputs:
     description: 'The url of the GraphQL endpoint for introspection'
     required: false
   headers: 
-    description: 'A comma separated list of HTTP headers to use while introspecting `endpoint`'
+    description: 'A JSON object representing the HTTP headers to use while introspecting `endpoint`'
     required: false
   insecure:
     description: 'Do not verify certificates during download'
