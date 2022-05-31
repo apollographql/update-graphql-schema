@@ -5,7 +5,6 @@
 @file:DependsOn("com.apollographql.apollo3:apollo-gradle-plugin-external:3.3.1-SNAPSHOT")
 @file:DependsOn("com.squareup.okio:okio-jvm:3.1.0")
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
-
 import com.apollographql.apollo3.gradle.internal.SchemaDownloader
 import okio.buffer
 import okio.sink
@@ -15,6 +14,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Executes the given command and returns stdout as a String
@@ -61,7 +61,7 @@ fun getInput(name: String): String {
 }
 
 fun getOptionalInput(name: String): String? {
-    return System.getenv("INPUT_${name.uppercase()}").ifBlank {
+    return System.getenv("INPUT_${name.uppercase()}")?.ifBlank {
         null
     }
 }
@@ -86,7 +86,7 @@ fun run() {
     }
     val headers: Map<String, String> = getOptionalInput("headers")?.let { headerJsonStr ->
         try {
-            (Json.parseToJsonElement(headerJsonStr) as JsonObject).mapValues { it.value.toString() }
+            (Json.parseToJsonElement(headerJsonStr) as JsonObject).mapValues { it.value.jsonPrimitive.content }
         } catch (e: Exception) {
             error("'headers' must be a JSON object of the form {\"header1\": \"value1\", \"header2\": \"value2\"}")
         }
@@ -96,11 +96,11 @@ fun run() {
         endpoint = getOptionalInput("endpoint"),
         graph = getOptionalInput("graph"),
         key = getOptionalInput("key"),
-        graphVariant = getInput("graph_variant"),
-        registryUrl = getInput("registryUrl"),
+        graphVariant = getOptionalInput("graph_variant") ?: "current",
+        registryUrl = getOptionalInput("registryUrl") ?: "https://graphql.api.apollographql.com/api/graphql",
         schema = File(getInput("schema")),
         headers = headers,
-        insecure = getInput("insecure").toBoolean(),
+        insecure = getOptionalInput("insecure").toBoolean(),
     )
 
     val gitCleanOutput = executeCommand("git", "status")
