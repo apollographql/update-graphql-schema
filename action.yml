@@ -39,6 +39,14 @@ inputs:
     description: 'The remote to push the branch used to create the pull request'
     required: false
     default: 'origin'
+  pr_title:
+    description: 'The title of the pull request that is created'
+    required: false
+    default: 'Update GraphQL Schema'
+  pr_body:
+    description: 'The body of the pull request that is created'
+    required: false
+    default: 'Update GraphQL Schema'
   commit_user_name:
     description: Name used for the commit user
     required: false
