@@ -127,7 +127,7 @@ fun run() {
     authenticateGithubCli()
     
     val baseBranchArgument = baseBranch?.let {
-        "--branch $it"
+        "-B $it"
     } ?: ""
     executeCommand("gh", "pr", "create", "-t", prTitle, "-b", prBody, baseBranchArgument)
 }
