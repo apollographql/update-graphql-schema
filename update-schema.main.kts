@@ -123,7 +123,7 @@ fun run() {
     executeCommand("git", "push", "origin", branch)
 
     authenticateGithubCli()
-    executeCommand("gh", "pr", "create", "-t", $prTitle, "-b", $prBody)
+    executeCommand("gh", "pr", "create", "-t", "\"$prTitle\"", "-b", "\"$prBody\"")
 }
 
 run()
