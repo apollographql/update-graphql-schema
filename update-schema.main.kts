@@ -114,6 +114,7 @@ fun run() {
     }
 
     executeCommand("git", "checkout", "-b", branch)
+    executeCommand("git", "add", getInput("schema"))
     executeCommand(
         "git",
         "-c", "user.name=${getInput("commit_user_name")}",
@@ -124,7 +125,7 @@ fun run() {
     executeCommand("git", "push", "origin", branch)
 
     authenticateGithubCli()
-
+    
     val baseBranchArgument = baseBranch?.let {
         "--branch $it"
     } ?: ""
