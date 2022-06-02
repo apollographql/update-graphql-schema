@@ -75,7 +75,8 @@ fun run() {
 
     val prTitle = getInput("pr_title")
     val prBody = getInput("pr_body")
-    
+    val baseBranch = getOptionalInput("base_branch")
+
     var branch = getOptionalInput("branch")
     if (branch == null) {
         val now = Instant.now().atOffset(ZoneOffset.UTC)
@@ -124,7 +125,11 @@ fun run() {
     executeCommand("git", "push", "origin", branch)
 
     authenticateGithubCli()
-    executeCommand("gh", "pr", "create", "-t", prTitle, "-b", prBody)
+    
+    val baseBranchArgument = baseBranch?.let {
+        "--branch $it"
+    } ?: ""
+    executeCommand("gh", "pr", "create", "-t", prTitle, "-b", prBody, baseBranchArgument)
 }
 
 run()

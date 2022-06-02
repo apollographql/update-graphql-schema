@@ -32,6 +32,9 @@ inputs:
     description: 'Do not verify certificates during download'
     required: false
     default: 'false'
+  base_branch:
+    description: 'The branch into which you want the schema merged. If not set, will use the default branch'
+    required: false
   branch:
     description: 'The name of the branch to use to create the pull request. If not set, will use update-schema-MM-dd-HH:mm'
     required: false
