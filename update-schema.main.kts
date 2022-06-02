@@ -73,6 +73,9 @@ fun run() {
 //    println("cwd " + File(".").absolutePath)
 //    println("files " + File(".").listFiles().map { it.name }.joinToString(","))
 
+    val prTitle = getInput("pr_title")
+    val prBody = getInput("pr_body")
+    
     var branch = getOptionalInput("branch")
     if (branch == null) {
         val now = Instant.now().atOffset(ZoneOffset.UTC)
@@ -120,7 +123,7 @@ fun run() {
     executeCommand("git", "push", "origin", branch)
 
     authenticateGithubCli()
-    executeCommand("gh", "pr", "create", "-f")
+    executeCommand("gh", "pr", "create", "-t", prTitle, "-b", prBody)
 }
 
 run()
