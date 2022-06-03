@@ -1,11 +1,24 @@
 # Update GraphQL Schema 🚀
 
-A Github Action that downloads your GraphQL schema from [introspection](https://graphql.org/learn/introspection/) and/or the [Studio registry](https://www.apollographql.com/docs/studio/) and opens a pull request if anything changed.
+A Github Action that downloads your GraphQL schema from [introspection](https://graphql.org/learn/introspection/) and/or
+the [Studio registry](https://www.apollographql.com/docs/studio/) and opens a pull request if anything changed.
 
-This action supports converting an introspection schema to SDL and vice-versa based on the file extension. We recommend using `.graphqls` to convert to SDL. 
+This action supports converting an introspection schema to SDL and vice-versa based on the file extension. We recommend
+using `.graphqls` to convert to SDL.
+
 ### Repository configuration
 
-Allow Workflows to write to your repository and create pull requests:
+By default, pull_request created by workflows do not run their checks. This is a security restriction from Github, read
+more about
+it [In the Github doc](https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow)
+. To workaround this, we recommend you create a machine user that has write access to your repo and use a personal
+access token (PAT) from this machine user to create the pull_request.
+
+See [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs)
+for more possible workarounds.
+
+If you don't need the checks to run, you can use the default GITHUB_TOKEN. For this you'll need to give it permission to
+write to your repository and create pull requests:
 
 ![](screenshot.png)
 
@@ -27,8 +40,11 @@ jobs:
         with:
           endpoint: "https://example.com/graphql"
           schema: "src/main/graphql/schema.graphqls"
-          
-          #  Optional HTTP settings for the download
+
+          # Recommended for checks to run on the pull request
+          github_token: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+          # Optional HTTP settings for the download
           headers: '{"Authorization": "Bearer $token", "User-Agent": "MyAction"}' # default: ""
           insecure: "false" # default: "false"
 
@@ -43,7 +59,6 @@ jobs:
           commit_author: Author <actions@github.com> # defaults to author of the commit that triggered the run
           commit_message: Automated Commit # defaults to "Update GraphQL Schema"
 ```
-
 
 ### Configuring with the [Studio registry](https://www.apollographql.com/docs/studio/)
 
@@ -62,6 +77,9 @@ jobs:
         with:
           key: "service:fullstack-tutorial:abc123"
           schema: "src/main/graphql/schema.graphqls"
+
+          # Recommended for checks to run on the pull request
+          github_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
           # Optional Studio registry settings
           graph: "fullstack-tutorial" # defaults to being parsed from the key
