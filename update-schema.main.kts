@@ -20,9 +20,9 @@ import kotlinx.serialization.json.jsonPrimitive
  * Executes the given command and returns stdout as a String
  * Throws if the exit code is not 0
  */
-fun executeCommand(vararg command: String): String {
+fun executeCommand(vararg command: String?): String {
     val process = ProcessBuilder()
-        .command(*command)
+        .command(command.toList().filterNotNull())
         .redirectError(ProcessBuilder.Redirect.INHERIT)
         .start()
 
@@ -73,6 +73,10 @@ fun run() {
 //    println("cwd " + File(".").absolutePath)
 //    println("files " + File(".").listFiles().map { it.name }.joinToString(","))
 
+    val prTitle = getInput("pr_title")
+    val prBody = getInput("pr_body")
+    val baseBranch = getOptionalInput("base_branch")
+
     var branch = getOptionalInput("branch")
     if (branch == null) {
         val now = Instant.now().atOffset(ZoneOffset.UTC)
@@ -110,6 +114,7 @@ fun run() {
     }
 
     executeCommand("git", "checkout", "-b", branch)
+    executeCommand("git", "add", getInput("schema"))
     executeCommand(
         "git",
         "-c", "user.name=${getInput("commit_user_name")}",
@@ -120,7 +125,11 @@ fun run() {
     executeCommand("git", "push", "origin", branch)
 
     authenticateGithubCli()
-    executeCommand("gh", "pr", "create", "-f")
+    
+    val baseBranchArgument = baseBranch?.let {
+        "-B $it"
+    }
+    executeCommand("gh", "pr", "create", "-t", prTitle, "-b", prBody, baseBranchArgument)
 }
 
 run()
