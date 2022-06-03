@@ -20,9 +20,9 @@ import kotlinx.serialization.json.jsonPrimitive
  * Executes the given command and returns stdout as a String
  * Throws if the exit code is not 0
  */
-fun executeCommand(vararg command: String): String {
+fun executeCommand(vararg command: String?): String {
     val process = ProcessBuilder()
-        .command(*command)
+        .command(command.toList().filterNotNull())
         .redirectError(ProcessBuilder.Redirect.INHERIT)
         .start()
 
@@ -128,7 +128,7 @@ fun run() {
     
     val baseBranchArgument = baseBranch?.let {
         "-B $it"
-    } ?: ""
+    }
     executeCommand("gh", "pr", "create", "-t", prTitle, "-b", prBody, baseBranchArgument)
 }
 
