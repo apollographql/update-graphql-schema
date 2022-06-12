@@ -5,7 +5,7 @@ inputs:
     description: 'The path to the schema file to be updated'
     required: true
   token:
-    description: 'The github token to use to create the pull request. Use a machine account personal access token if you want the pull request checks to run.'
+    description: 'The github token to use to create the pull request. Using a machine account personal access token is recommended.  if you want the pull request checks to run.'
     required: true
     default: ${{ github.token }}
   graph:
@@ -36,8 +36,9 @@ inputs:
     description: 'The branch into which you want the schema merged. If not set, will use the default branch'
     required: false
   branch:
-    description: 'The name of the branch to use to create the pull request. If not set, will use update-schema-MM-dd-HH:mm'
+    description: 'The name of the branch to use to create the pull request'
     required: false
+    default: 'update-graphql-schema'
   remote:
     description: 'The remote to push the branch used to create the pull request'
     required: false
