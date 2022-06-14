@@ -1,22 +1,20 @@
 #!/usr/bin/env kotlin
 
-@file:Repository("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-@file:Repository("https://repo.maven.apache.org/maven2")
-@file:DependsOn("com.squareup.okio:okio-jvm:3.1.0")
-@file:DependsOn("com.squareup.okhttp3:okhttp:4.10.0")
-@file:DependsOn("com.apollographql.apollo3:apollo-tooling:3.3.1-SNAPSHOT")
+@file:DependsOn("net.mbonnin.bare-graphql:bare-graphql:0.0.1")
+@file:DependsOn("com.apollographql.apollo3:apollo-tooling:3.3.1")
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
 import com.apollographql.apollo3.annotations.ApolloExperimental
 import com.apollographql.apollo3.tooling.SchemaDownloader
 import kotlinx.serialization.json.*
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import net.mbonnin.bare.graphql.asList
+import net.mbonnin.bare.graphql.asMap
+import net.mbonnin.bare.graphql.asString
+import net.mbonnin.bare.graphql.graphQL
 import okio.buffer
 import okio.source
 import java.io.File
+import kotlin.system.exitProcess
 
 val ghRepositoryOwner = System.getenv("GITHUB_REPOSITORY").split("/")[0]
 val ghRepositoryName = System.getenv("GITHUB_REPOSITORY").split("/")[1]
@@ -87,13 +85,43 @@ fun run() {
         insecure = getOptionalInput("insecure").toBoolean(),
     )
 
-    val gitCleanOutput = executeCommand("git", "status")
-    if (gitCleanOutput.contains("nothing to commit, working tree clean")) {
+    if (isRepoClean()) {
         println("The schema did not change, exiting.")
-        return
+        exitProcess(0)
     }
 
-    executeCommand("git", "checkout", "-b", headBranch)
+    val details = ghRepositoryDetails()
+    val remote = getInput("remote")
+
+    if (!details.hasPullRequestOpen) {
+        println("Opening pull request")
+        executeCommand("git", "checkout", "-b", headBranch)
+        addAndCommit()
+        // Force push because there might be a stale branch from an older PR
+        executeCommand("git", "push", remote, headBranch, "--force")
+        ghOpenPullRequest(details.id, baseBranch ?: details.defaultBranch, headBranch, prTitle, prBody)
+    } else {
+        println("Pull request is already open, update branch")
+        val tmpSchema = File.createTempFile("schema", "graphqls")
+        schemaFile.copyTo(tmpSchema, overwrite = true)
+        executeCommand("git", "stash")
+        // if the schema is a new file, it might not be stashed and prevent the checkout -> remove it
+        executeCommand("git", "clean", "-fd")
+        executeCommand("git", "fetch", remote, "--depth", "1", headBranch)
+        executeCommand("git", "checkout", headBranch)
+        tmpSchema.copyTo(schemaFile, overwrite = true)
+
+        if (isRepoClean()) {
+            println("The schema did not change, exiting.")
+            exitProcess(0)
+        }
+        addAndCommit()
+        executeCommand("git", "push", remote, headBranch)
+    }
+    println("Done.")
+}
+
+fun addAndCommit() {
     executeCommand("git", "add", getInput("schema"))
     executeCommand(
         "git",
@@ -102,18 +130,6 @@ fun run() {
         "commit", "-a", "-m", getInput("commit_message"),
         "--author", getInput("commit_author"),
     )
-    println("Pushing new branch")
-    executeCommand("git", "push", getInput("remote"), headBranch, "--force")
-
-    val details = ghRepositoryDetails()
-
-    if (!details.hasPullRequestOpen) {
-        println("Opening pull request")
-        ghOpenPullRequest(details.id, baseBranch ?: details.defaultBranch, headBranch, prTitle, prBody)
-    } else {
-        println("Pull request is already open")
-    }
-    println("Done.")
 }
 
 class RepositoryDetails(
@@ -121,6 +137,11 @@ class RepositoryDetails(
     val defaultBranch: String,
     val hasPullRequestOpen: Boolean
 )
+
+fun isRepoClean(): Boolean {
+    val gitCleanOutput = executeCommand("git", "status")
+    return gitCleanOutput.contains("nothing to commit, working tree clean")
+}
 
 fun ghRepositoryDetails(): RepositoryDetails {
     val query = """
@@ -163,76 +184,7 @@ fun ghOpenPullRequest(repositoryId: String, baseBranch: String, headBranch: Stri
 }
 
 fun ghGraphQL(operation: String): Map<String, Any?> =
-    graphQL(operation, mapOf("Authorization" to "bearer ${getInput("token")}"))
+    graphQL(operation, emptyMap(), mapOf("Authorization" to "bearer ${getInput("token")}"))
 
-fun graphQL(operation: String, headers: Map<String, String> = emptyMap()): Map<String, Any?> {
-    val response = mapOf(
-        "query" to operation,
-        "variables" to emptyMap<Nothing, Nothing>()
-    ).toJsonElement().toString()
-        .let {
-            Request.Builder()
-                .post(it.toRequestBody("application/graphql+json".toMediaType()))
-                .url("https://api.github.com/graphql")
-                .build()
-        }
-        .let {
-            OkHttpClient.Builder()
-                .addInterceptor {
-                    it.proceed(it.request().newBuilder()
-                        .apply {
-                            headers.forEach {
-                                header(it.key, it.value)
-                            }
-                        }.build()
-                    )
-                }
-                .build()
-                .newCall(it).execute()
-        }
-
-    if (!response.isSuccessful) {
-        error("Cannot execute GraphQL operation '$operation':\n${response.body?.source()?.readUtf8()}")
-    }
-
-    val responseText = response.body?.source()?.readUtf8() ?: error("Cannot read response body")
-    return Json.parseToJsonElement(responseText).toAny().asMap
-}
-
-fun Any?.toJsonElement(): JsonElement = when (this) {
-    is Map<*, *> -> JsonObject(this.asMap.mapValues { it.value.toJsonElement() })
-    is List<*> -> JsonArray(map { it.toJsonElement() })
-    is Boolean -> JsonPrimitive(this)
-    is Number -> JsonPrimitive(this)
-    is String -> JsonPrimitive(this)
-    null -> JsonNull
-    else -> error("cannot convert $this to JsonElement")
-}
-
-fun JsonElement.toAny(): Any? = when (this) {
-    is JsonObject -> this.mapValues { it.value.toAny() }
-    is JsonArray -> this.map { it.toAny() }
-    is JsonPrimitive -> {
-        when {
-            isString -> this.content
-            this is JsonNull -> null
-            else -> booleanOrNull ?: intOrNull ?: longOrNull ?: doubleOrNull ?: error("cannot decode $this")
-        }
-    }
-    else -> error("cannot convert $this to Any")
-}
-
-inline fun <reified T> Any?.cast() = this as T
-
-val Any?.asMap: Map<String, Any?>
-    get() = this.cast()
-val Any?.asList: List<Any?>
-    get() = this.cast()
-val Any?.asString: String
-    get() = this.cast()
-val Any?.asBoolean: String
-    get() = this.cast()
-val Any?.asNumber: Number
-    get() = this.cast()
 
 run()
