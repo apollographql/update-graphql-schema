@@ -1,7 +1,7 @@
 # Update GraphQL Schema 🚀
 
 A Github Action that downloads your GraphQL schema from [introspection](https://graphql.org/learn/introspection/) and/or
-the [Studio registry](https://www.apollographql.com/docs/studio/) and opens a pull request if anything changed.
+the [Apollo GraphOS](https://www.apollographql.com/docs/graphos/) and opens a pull request if anything changed.
 
 This action supports converting an introspection schema to SDL and vice-versa based on the file extension. We recommend
 using `.graphqls` to convert to SDL.
@@ -60,7 +60,7 @@ jobs:
           commit_message: Automated Commit # defaults to "Update GraphQL Schema"
 ```
 
-### Configuring with the [Studio registry](https://www.apollographql.com/docs/studio/)
+### Configuring with [Apollo GraphOS](https://www.apollographql.com/docs/graphos/)
 
 ```yaml
 name: Update GraphQL schema
@@ -81,7 +81,7 @@ jobs:
           # Recommended for checks to run on the pull request
           github_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
-          # Optional Studio registry settings
+          # Optional GraphOS settings
           graph: "fullstack-tutorial" # defaults to being parsed from the key
           graph_variant: "production" # default: "current"
 
