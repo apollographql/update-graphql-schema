@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: apollographql/update-graphql-schema@main
+      - uses: apollographql/update-graphql-schema@59d4aa970db7d8559e48a5ddc5b3c09c052c88b0
         with:
           endpoint: "https://example.com/graphql"
           schema: "src/main/graphql/schema.graphqls"
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: apollographql/update-graphql-schema@main
+      - uses: apollographql/update-graphql-schema@59d4aa970db7d8559e48a5ddc5b3c09c052c88b0
         with:
           key: "service:fullstack-tutorial:abc123"
           schema: "src/main/graphql/schema.graphqls"
