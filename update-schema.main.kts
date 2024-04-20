@@ -1,7 +1,7 @@
 #!/usr/bin/env kotlin
 
 @file:DependsOn("net.mbonnin.bare-graphql:bare-graphql:0.0.1")
-@file:DependsOn("com.apollographql.apollo3:apollo-tooling:4.0.0-beta.4")
+@file:DependsOn("com.apollographql.apollo3:apollo-tooling:4.0.0-beta.5")
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
 import com.apollographql.apollo3.annotations.ApolloExperimental
